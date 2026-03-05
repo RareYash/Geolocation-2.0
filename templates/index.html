@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="City locator — Premium City Guide using OpenStreetMap">
+    <title>City locator</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📍</text></svg>">
+</head>
+
+<body>
+
+    <div class="app-container">
+        <!-- ── Left Content Column ── -->
+        <main class="left-panel">
+
+            <!-- Navbar -->
+            <header class="topnav">
+                <a href="/" class="logo">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" width="18" height="18">
+                            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                            <circle cx="12" cy="10" r="3" />
+                        </svg>
+                    </div>
+                    City locator
+                </a>
+                <nav class="nav-links">
+                    <a href="/">Home</a>
+                    <a href="/about">About Us</a>
+                </nav>
+                <a href="#" class="btn-signup">Sign Up</a>
+            </header>
+
+            <!-- SEARCH VIEW (Initial State) -->
+            <div id="searchView" class="view-state active">
+                <h1 class="hero-title">Find The Best Places For<br>City Newcomers
+                </h1>
+                <p class="hero-sub">Moving to a new city? We help you easily find top-rated restaurants, ATMs,
+                    hospitals,
+                    and transit offline. ML-ranked and completely free.</p>
+
+                <form id="searchForm" class="search-form">
+
+                    <div class="search-input-group">
+                        <svg width="20" height="20" stroke="#6b7280" stroke-width="2" fill="none" stroke-linecap="round"
+                            stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="8" />
+                            <path d="m21 21-4.3-4.3" />
+                        </svg>
+                        <input type="text" id="locationInput" placeholder="Where are you staying in Nashik?"
+                            autocomplete="off" required>
+                        <button type="button" class="btn-detect" id="detectLocationBtn">
+                            <svg width="16" height="16" stroke="currentColor" stroke-width="2" fill="none">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M12 2v4m0 12v4M2 12h4m12 0h4" />
+                            </svg>
+                            Detect
+                        </button>
+                    </div>
+
+                    <div class="filter-row">
+                        <!-- Custom Budget Dropdown -->
+                        <div class="custom-dropdown-container" id="budgetDropdown"
+                            style="position:relative; top:0; left:0; z-index:900;">
+                            <div class="custom-dropdown-btn" id="budgetDropdownBtn"
+                                style="min-width: 160px; padding: 12px 20px; border: 1px solid var(--border); box-shadow: none;">
+                                <span id="budgetDropdownLabel">Any Budget</span>
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </div>
+                            <div class="custom-dropdown-menu" style="width: 100%;">
+                                <div class="custom-option selected" data-value="" data-label="Any Budget">Any Budget
+                                </div>
+                                <div class="custom-option" data-value="1" data-label="₹ Inexpensive">₹ Inexpensive</div>
+                                <div class="custom-option" data-value="2" data-label="₹₹ Moderate">₹₹ Moderate</div>
+                                <div class="custom-option" data-value="3" data-label="₹₹₹ Expensive">₹₹₹ Expensive</div>
+                            </div>
+                            <!-- Hidden input to store value for the form -->
+                            <input type="hidden" id="budgetSelect" value="">
+                        </div>
+
+                        <!-- Custom Radius Dropdown -->
+                        <div class="custom-dropdown-container" id="radiusDropdown"
+                            style="position:relative; top:0; left:0; z-index:900;">
+                            <div class="custom-dropdown-btn" id="radiusDropdownBtn"
+                                style="min-width: 160px; padding: 12px 20px; border: 1px solid var(--border); box-shadow: none;">
+                                <span id="radiusDropdownLabel">2 km Radius</span>
+                                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="m6 9 6 6 6-6" />
+                                </svg>
+                            </div>
+                            <div class="custom-dropdown-menu" style="width: 100%;">
+                                <div class="custom-option" data-value="1000" data-label="1 km Radius">1 km Radius</div>
+                                <div class="custom-option selected" data-value="2000" data-label="2 km Radius">2 km
+                                    Radius</div>
+                                <div class="custom-option" data-value="5000" data-label="5 km Radius">5 km Radius</div>
+                            </div>
+                            <!-- Hidden input to store value for the form -->
+                            <input type="hidden" id="radiusSelect" value="2000">
+                        </div>
+                    </div>
+
+                    <div class="category-pills" id="categoryGrid">
+                        <!-- Loaded dynamically via JS -->
+                    </div>
+
+                    <div id="formError" class="error-msg" style="display:none;"></div>
+
+                    <div class="action-row">
+                        <button type="submit" id="submitBtn" class="btn-primary">Search Nearby</button>
+                        <button type="button" id="selectAllBtn" class="btn-outline">Select All</button>
+                    </div>
+
+                </form>
+
+                <div class="stats-bar">
+                    <div class="stat-item">
+                        <span style="font-size:24px">📍</span>
+                        <div class="stat-info">
+                            <div class="num">8+</div>
+                            <div class="lbl">Categories</div>
+                        </div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span style="font-size:24px">💸</span>
+                        <div class="stat-info">
+                            <div class="num">100%</div>
+                            <div class="lbl">Free Use</div>
+                        </div>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span style="font-size:24px">🧠</span>
+                        <div class="stat-info">
+                            <div class="num">Ranked</div>
+                            <div class="lbl">By ML Score</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RESULTS VIEW -->
+            <div id="resultsView" class="view-state">
+                <button class="btn-back" id="backToSearchBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        style="margin-right:8px">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back to Search
+                </button>
+                <h2 class="results-header-text">Recommendations</h2>
+                <p class="results-meta" id="resultsSummaryText">Showing X places in Y categories</p>
+
+                <div id="resultsContainer"></div>
+            </div>
+
+            <!-- DETAIL OVERLAY (Slides up within Left Panel) -->
+            <div id="detailOverlay" class="detail-overlay">
+                <button class="btn-back detail-close" id="closeDetailBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                        style="margin-right:8px">
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    Back to Results
+                </button>
+                <div id="detailBody"></div>
+            </div>
+
+        </main>
+
+        <!-- ── Right Map Column ── -->
+        <aside class="right-panel">
+            <div id="map"></div>
+
+            <!-- Floating Elements on Map -->
+            <div class="custom-dropdown-container" id="cityDropdown">
+                <div class="custom-dropdown-btn" id="cityDropdownBtn">
+                    <span id="cityDropdownLabel">Nashik Area</span>
+                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+                </div>
+                <div class="custom-dropdown-menu">
+                    <div class="custom-option selected" data-value="19.9975,73.7898" data-name="Nashik">Nashik Area
+                    </div>
+                    <div class="custom-option" data-value="18.5204,73.8567" data-name="Pune">Pune Area</div>
+                    <div class="custom-option" data-value="19.0760,72.8777" data-name="Mumbai">Mumbai Area</div>
+                    <div class="custom-option" data-value="19.2183,72.9781" data-name="Thane">Thane Area</div>
+                </div>
+            </div>
+
+            <button class="float-btn" id="fullScreenMapBtn" title="Toggle Fullscreen Map">
+                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+                </svg>
+            </button>
+
+            <div class="float-badge">
+                <span>👑</span> Live OSM Data
+            </div>
+        </aside>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/script.js"></script>
+</body>
+
+</html>
