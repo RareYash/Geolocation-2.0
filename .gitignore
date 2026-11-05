@@ -1,0 +1,18 @@
+# Environments
+.env
+venv/
+__pycache__/
+
+# Dependencies
+node_modules/
+package-lock.json
+
+# User specifics
+Catche/
+.vscode/
+
+# Python
+*.pyc
+*.pyo
+*.pyd
+*.db
